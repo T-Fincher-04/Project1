@@ -1,3 +1,4 @@
+from math import cos, pi, sin
 from direct.showbase.ShowBase import ShowBase
 import DefensePaths as DefensePaths
 import SpaceJamClasses
@@ -86,6 +87,27 @@ class MyApp(ShowBase):
             nickname = "Drone" + str(SpaceJamClasses.Drone.droneCount)
             self.DrawCloudDefense(self.Planet1, nickname)
             self.DrawBaseballSeams(self.Space_Station, nickname, j, fullcycle, 2)
+
+    
+def DrawCircles(self):
+        self.draw_circle_on_plane('X', 0, 0, 0, 100)
+        self.draw_circle_on_plane('Y', 0, 0, 0, 100)
+        self.draw_circle_on_plane('Z', 0, 0, 0, 100)
+
+    
+def draw_circle_on_plane(self, plane, x, y, z, radius):
+        num_points = 100
+        angle_step = 2 * pi / num_points
+        points = []
+
+        for i in range(num_points):
+            angle = i * angle_step
+            if plane == 'X':
+                points.append((x, y + radius * sin(angle), z + radius * cos(angle)))
+            elif plane == 'Y':
+                points.append((x + radius * sin(angle), y, z + radius * cos(angle)))
+            elif plane == 'Z':
+                points.append((x + radius * sin(angle), y + radius * cos(angle), z))
    
             
 
