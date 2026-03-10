@@ -2,6 +2,7 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import *
 from panda3d.core import Loader, NodePath, Vec3
 from direct.task import Task
+from CollideObjectBase import InverseSphereCollideObject, CapsuleCollideableObject, SphereCollideObj
 
 
 
@@ -17,6 +18,16 @@ class Universe(ShowBase):
               self.modelNode.setTexture(tex, 1)
 
 
+class Universe(InverseSphereCollideObject):
+       def __init__(self, loader: Loader, modelPath: str, parentNode: NodePath, nodeName: str, texPath: str, posVec: Vec3, scaleVec: float):
+              super(Universe, self).__init__(loader, modelPath, parentNode, nodeName, Vec3(0, 0, 0), 0.9)
+              self.modelNode.setPos(posVec)
+              self.modelNode.setScale(scaleVec)
+              self.modelNode.setName(nodeName)
+              tex = loader.loadTexture(texPath)
+              self.modelNode.setTexture(tex, 1)
+
+
 class Planet(ShowBase):
         def __init__(self, loader: Loader, modelPath: str, parentNode: NodePath, nodeName: str, texPath: str, posVec: Vec3, scaleVec: float):
             self.modelNode = loader.loadModel(modelPath)
@@ -27,6 +38,15 @@ class Planet(ShowBase):
             self.modelNode.setName(nodeName)
             tex = loader.loadTexture(texPath)
             self.modelNode.setTexture(tex, 1)
+
+
+class Planet(SphereCollideObj):
+    def __init__(self, loader: Loader, modelPath: str, parentNode: NodePath, nodeName: str, texPath: str, posVec: Vec3, scaleVec: float):
+        super(Planet, self).__init__(loader, modelPath, parentNode, nodeName, colRadius=1.0, colPositionVec=Vec3(0, 0, 0))
+        self.modelNode.setPos(posVec)
+        self.modelNode.setScale(scaleVec)
+        tex = loader.loadTexture(texPath)
+        self.modelNode.setTexture(tex, 1)
             
 
 class Drone(ShowBase):
@@ -40,6 +60,16 @@ class Drone(ShowBase):
             self.modelNode.setName(nodeName)
             tex = loader.loadTexture(texPath)
             self.modelNode.setTexture(tex, 1)
+
+
+class Drone(SphereCollideObj):
+    droneCount = 0
+    def __init__(self, loader: Loader, modelPath: str, parentNode: NodePath, nodeName: str, texPath: str, posVec: Vec3, scaleVec: float):
+        super(Drone, self).__init__(loader, modelPath, parentNode, nodeName, 1.0)
+        self.modelNode.setPos(posVec)
+        self.modelNode.setScale(scaleVec)
+        tex = loader.loadTexture(texPath)
+        self.modelNode.setTexture(tex, 1)
 
 
 class Spaceship(ShowBase):
@@ -149,6 +179,16 @@ class Space_Station(ShowBase):
               self.modelNode.setName(nodeName)
               tex = loader.loadTexture(texPath)
               self.modelNode.setTexture(tex, 1)
+
+
+class Space_Station(CapsuleCollideableObject):
+       def __init__(self, loader: Loader, modelPath: str, parentNode: NodePath, nodeName: str, posVec: Vec3, scaleVec: float):
+              super(Space_Station, self).__init__(loader, modelPath, parentNode, nodeName, 1, -1, 5, 1, -1, -5, 10)
+              self.modelNode.setPos(posVec)
+              self.modelNode.setScale(scaleVec)
+
+
+
 
 
 

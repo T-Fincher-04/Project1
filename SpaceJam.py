@@ -1,6 +1,7 @@
 from direct.showbase.ShowBase import ShowBase
 import DefensePaths as DefensePaths
 import SpaceJamClasses
+from panda3d.core import CollisionTraverser, CollisionHandlerPusher, CollisionSphere, CollisionNode
 
 class MyApp(ShowBase):
 
@@ -12,50 +13,6 @@ class MyApp(ShowBase):
         
         
     def SetupScene(self):
-            self.Universe = self.loader.loadModel("./Assets/Universe/Universe.glb")
-            self.Universe.reparentTo(self.render)
-            self.Universe.setScale(15000)
-            
-            self.Planet1 = self.loader.loadModel("./Assets/Planets/Planet1.x")
-            self.Planet1.reparentTo(self.render)
-            self.Planet1.setPos(150, 5000, 67)
-            self.Planet1.setScale(100)
-
-            self.Planet2 = self.loader.loadModel("./Assets/Planets/Planet2.x")
-            self.Planet2.reparentTo(self.render)
-            self.Planet2.setPos(500, 5000, 67)
-            self.Planet2.setScale(100)
-            
-            self.Planet3 = self.loader.loadModel("./Assets/Planets/Planet3.x")
-            self.Planet3.reparentTo(self.render)
-            self.Planet3.setPos(1000, 5000, 67)
-            self.Planet3.setScale(100)
-
-            self.Planet4 = self.loader.loadModel("./Assets/Planets/Planet4.x")
-            self.Planet4.reparentTo(self.render)
-            self.Planet4.setPos(1500, 5000, 67)
-            self.Planet4.setScale(100)
-
-            self.Planet5 = self.loader.loadModel("./Assets/Planets/Planet5.x")
-            self.Planet5.reparentTo(self.render)
-            self.Planet5.setPos(2000, 5000, 67)
-            self.Planet5.setScale(100)
-
-            self.Planet6 = self.loader.loadModel("./Assets/Planets/Planet6.x")
-            self.Planet6.reparentTo(self.render)
-            self.Planet6.setPos(2500, 5000, 67)
-            self.Planet6.setScale(100)
-
-            self.Spaceship = self.loader.loadModel("./Assets/Spaceships/Dumbledore.egg")
-            self.Spaceship.reparentTo(self.render)
-            self.Spaceship.setPos(-1000, 4000, 67)
-            self.Spaceship.setScale(50)
-            
-            self.Space_Station = self.loader.loadModel("./Assets/Space Station/spaceStation.egg")
-            self.Space_Station.reparentTo(self.render)
-            self.Space_Station.setPos(2000, 3000, 67)
-            self.Space_Station.setScale(100)
-
             self.Universe = SpaceJamClasses.Universe(self.loader, "./Assets/Universe/Universe.glb", self.render, "Universe", "./Assets/Universe/Universe.png", (0, 0, 0), 15000)
             self.Planet1 = SpaceJamClasses.Planet(self.loader, "./Assets/Planets/Planet1.x", self.render, "Planet1", "./Assets/Planets/Planet1.png", (150, 5000, 67), 100)
             self.Planet2 = SpaceJamClasses.Planet(self.loader, "./Assets/Planets/Planet2.x", self.render, "Planet2", "./Assets/Planets/Planet2.png", (500, 5000, 67), 100)
@@ -63,8 +20,22 @@ class MyApp(ShowBase):
             self.Planet4 = SpaceJamClasses.Planet(self.loader, "./Assets/Planets/Planet4.x", self.render, "Planet4", "./Assets/Planets/Planet4.png", (1500, 5000, 67), 100)
             self.Planet5 = SpaceJamClasses.Planet(self.loader, "./Assets/Planets/Planet5.x", self.render, "Planet5", "./Assets/Planets/Planet5.png", (2000, 5000, 67), 100)
             self.Planet6 = SpaceJamClasses.Planet(self.loader, "./Assets/Planets/Planet6.x", self.render, "Planet6", "./Assets/Planets/Planet6.png", (2500, 5000, 67), 100)
-            self.Spaceship = SpaceJamClasses.Spaceship(self.loader, "./Assets/Spaceships/Dumbledore.egg", self.render, "Spaceship", "./Assets/Spaceships/spacejet_C.png", (-1000, 4000, 67), 50)
+            self.Spaceship = SpaceJamClasses.Spaceship(self.loader,"./Assets/Spaceships/Dumbledore.egg", self.render, "Spaceship", "./Assets/Spaceships/spacejet_C.png", (-1000, 4000, 67), 50)
             self.Space_Station = SpaceJamClasses.Space_Station(self.loader, "./Assets/Space Station/spaceStation.egg", self.render, "Space_Station", "./Assets/Space Station/SpaceStation1_Dif2.png", (2000, 3000, 67), 100)
+
+            self.cTrav = CollisionTraverser()
+            self.cTrav.traverse(self.render)
+            self.pusher = CollisionHandlerPusher()
+            self.pusher.addCollider(self.Spaceship.collisionNode, self.Spaceship.modelNode)
+            self.cTrav.addCollider(self.Spaceship.collisionNode, self.pusher)
+            self.cTrav.showCollisions(self.render)
+
+    def addCollision(self, obj):
+        collision_sphere = CollisionSphere(0, 0, 0, 10) 
+        collision_node = CollisionNode(obj.name + "-collider")
+        collision_node.addSolid(collision_sphere)
+        obj.collisionNode = self.render.attachNewNode(collision_node)
+        self.cTrav.addCollider(obj.collisionNode, self.pusher)
             
     def DrawBaseballSeams(self, centralObject, droneName, step, numSeams, radius = 1):
             unitVec = DefensePaths.BaseballSeams(step, numSeams, B = 0.4)
@@ -86,6 +57,9 @@ class MyApp(ShowBase):
             nickname = "Drone" + str(SpaceJamClasses.Drone.droneCount)
             self.DrawCloudDefense(self.Planet1, nickname)
             self.DrawBaseballSeams(self.Space_Station, nickname, j, fullcycle, 2)
+
+
+    
     
 
 
