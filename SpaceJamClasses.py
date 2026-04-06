@@ -4,12 +4,13 @@ from panda3d.core import *
 from panda3d.core import Loader, NodePath, Vec3, CollisionNode, CollisionSphere, BitMask32 
 from direct.task import Task
 from panda3d.core import TransparencyAttrib
-from CollideObjectBase import InverseSphereCollideObject, CapsuleCollideableObject, SphereCollideObj 
+from CollideObjectBase import InverseSphereCollideObject, CapsuleCollideableObject, PlacedObject, SphereCollideObj 
 from direct.showbase import ShowBaseGlobal
 from panda3d.core import CollisionHandlerEvent
 from direct.interval.LerpInterval import LerpFunc
 from direct.particles.ParticleEffect import ParticleEffect
-import re
+from direct.task.Task import TaskManager
+import DefensePaths as DefensePaths
 
 
 class UniverseModel(ShowBase):
@@ -91,6 +92,44 @@ class Drone(SphereCollideObj):
         self.collisionNode.setName(nodeName)
         self.collisionNode.setPos(0, 0, 0)
 
+
+class Orbiter(SphereCollideObj):
+       numOrbits = 0
+       velocity = 0.005
+       cloudTimer = 240
+       def __init__(self, loader:Loader, taskMgr: TaskManager, modelPath: str, parentNode: NodePath, nodeName: str, scaleVec: float, texPath: str, centralObject: PlacedObject, orbitRadius: float, orbitType: str, staringAt: Vec3):
+              super(Orbiter, self).__init__(loader, modelPath, parentNode, nodeName, Vec3(0, 0, 0), 3.2)
+              self.taskMgr = taskMgr
+              self.orbitType = orbitType
+              self.modelNode.setScale(scaleVec)
+              tex = loader.loadTexture(texPath)
+              self.modelNode.setTexture(tex, 1)
+              self.orbitObject = centralObject
+              self.orbitRadius = orbitRadius
+              self.staringAt = staringAt
+              Orbiter.numOrbits += 1
+
+              self.cloudTimer = 0
+              self.taskFlag = "Traveler-" + str(Orbiter.numOrbits)
+              taskMgr.add(self.Orbit, self.taskFlag)
+
+       
+       def Orbit(self, task):
+              if self.orbitType == "MLB":
+                     positionVec = DefensePaths.BaseballSeams(task.time * Orbiter.velocity, self.numOrbits, 2.0)
+                     self.modelNode.setPos(positionVec * self.orbitRadius + self.orbitObject.modelNode.getPos())
+
+              elif self.orbitType == "Cloud":
+                     if self.cloudTimer < Orbiter.cloudTimer:
+                            self.cloudTimer += 1
+                     
+                     else:
+                            self.cloudTimer = 0
+                            positionVec = DefensePaths.Cloud()
+                            self.modelNode.setPos(positionVec * self.orbitRadius + self.orbitObject.modelNode.getPos())
+              
+              self.modelNode.lookAt(self.staringAt.modelNode)
+              return Task.cont
 
 
 
@@ -329,6 +368,7 @@ class Missile(SphereCollideObj):
               self.collisionNode.reparentTo(self.modelNode)
               self.collisionNode.setName(nodeName)
               self.collisionNode.setPos(0, 0, 0)
+              self.velocity = Vec3(0, 0, 0)
 
        
        

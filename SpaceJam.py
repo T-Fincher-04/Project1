@@ -1,6 +1,4 @@
-from platform import node
-import re
-from turtle import distance
+from math import dist
 from direct.showbase.ShowBase import ShowBase
 import DefensePaths as DefensePaths
 import SpaceJamClasses
@@ -11,6 +9,7 @@ from direct.particles.ParticleEffect import ParticleEffect
 from direct.interval.LerpInterval import LerpFunc
 from panda3d.core import Vec3
 from direct.showbase import ShowBaseGlobal
+from direct.gui.OnscreenText import OnscreenText
 class MyApp(ShowBase):
 
     def __init__(self):
@@ -40,6 +39,71 @@ class MyApp(ShowBase):
         self.taskMgr.add(self.ApplyGravity, "ApplyGravity")
         self.accept("l", self.Land)
         self.accept("k", self.TakeOff)
+        self.lockOn = False
+        self.currentTarget = None
+        self.lockText = OnscreenText(text='Lock On: None', pos=(-1.3, 0.9), scale=0.07, fg=(1, 1, 1, 1), align=0)
+        self.accept("t", self.ToggleLock)
+        self.taskMgr.add(self.UpdateLockUI, "UpdateLockOn")
+        self.taskMgr.add(self.UpdateMissiles, "UpdateMissiles")
+
+    
+    def UpdateMissiles(self, task):
+
+        dt = ShowBaseGlobal.globalClock.getDt()
+
+        for missileName in SpaceJamClasses.Missile.fireModels:
+
+            missileNode = SpaceJamClasses.Missile.fireModels[missileName]
+
+            if missileNode.isEmpty():
+                continue
+
+            missile = missileNode  
+
+        
+            if hasattr(missile, "velocity"):
+                missile.setFluidPos(missile.getPos() + missile.velocity * dt)
+
+        return task.cont
+         
+
+
+    
+    def ToggleLock(self):
+         self.lockOn = not self.lockOn
+
+         if not self.lockOn:
+              self.currentTarget = None
+              self.lockText.setText("")
+              print("Lock OFF")
+         else:
+              print("Lock ON")
+
+    
+    def UpdateLockUI(self, task):
+         if not self.lockOn:
+              return task.cont
+         
+         shipPos = self.Spaceship.modelNode.getPos()
+
+         closest = None
+         closestDist = float('inf')
+
+         objects = []
+
+         for obj in self.render.findAllMatches("**/Drone_*"):
+              objects.append(obj)
+         for obj in self.render.findAllMatches("**/Planet_*"):
+              objects.append(obj)
+
+         for obj in objects:
+              dist = (obj.getPos() - shipPos).length()
+              if dist < closestDist:
+                    closestDist = dist
+                    closest = obj
+         if closest:
+              self.currentTarget = closest
+              self.lockText.setText(f"Locked: {closest.getName()}")
 
     def ApplyGravity(self, task):
         planetRadius = 100
@@ -64,6 +128,39 @@ class MyApp(ShowBase):
             if distance < planetRadius + 150:
                     self.canLand = True
                     self.currentPlanet = planet
+        
+
+        for missileName in SpaceJamClasses.Missile.fireModels:
+
+            missileNode = SpaceJamClasses.Missile.fireModels[missileName]
+
+            if missileNode.isEmpty():
+                continue
+
+            missilePos = missileNode.getPos()
+
+            for planet in self.planets:
+                planetPos = planet.modelNode.getPos()
+
+            direction = planetPos - missilePos
+            distance = direction.length()
+
+            if distance < 2000:
+                direction.normalize()
+
+                strength = 100000 / (distance * distance)
+                pull = direction * strength
+
+            if hasattr(missileNode, "velocity"):
+                missileNode.velocity += pull
+            
+
+        return task.cont
+        
+        
+        
+
+
     
     def Land(self):
 
@@ -114,6 +211,10 @@ class MyApp(ShowBase):
             self.Planet6 = SpaceJamClasses.Planet(self.loader, "./Assets/Planets/Planet6.x", self.render, "Planet_6", "./Assets/Planets/Planet6.png", (2500, 5000, 67), 100)
             self.Spaceship = Player.Spaceship(self.loader, self.taskMgr, self.accept, "./Assets/Spaceships/Dumbledore.egg", self.render, "Spaceship", "./Assets/Spaceships/spacejet_C.png", (-1000, 4000, 67), 50)
             self.Space_Station = SpaceJamClasses.Space_Station(self.loader, "./Assets/Space Station/spaceStation.egg", self.render, "Space_Station", "./Assets/Space Station/SpaceStation1_Dif2.png", (2000, 3000, 67), 100)
+            self.Sentinal1 = SpaceJamClasses.Orbiter(self.loader, self.taskMgr, "./Assets/DroneDefender/DroneDefender.obj", self.render, "Drone", 6.0, "./Assets/DroneDefender/octotoad1_auv.png", self.Planet2, 900, "MLB", self.Spaceship)
+            self.Sentinal2 = SpaceJamClasses.Orbiter(self.loader, self.taskMgr, "./Assets/DroneDefender/DroneDefender.obj", self.render, "Drone", 6.0, "./Assets/DroneDefender/octotoad1_auv.png", self.Planet5, 500, "Cloud", self.Spaceship)
+            self.Sentinal3 = SpaceJamClasses.Orbiter(self.loader, self.taskMgr, "./Assets/DroneDefender/DroneDefender.obj", self.render, "Drone", 6.0, "./Assets/DroneDefender/octotoad1_auv.png", self.Planet1, 600, "MLB", self.Spaceship)
+            self.Sentinal4 = SpaceJamClasses.Orbiter(self.loader, self.taskMgr, "./Assets/DroneDefender/DroneDefender.obj", self.render, "Drone", 6.0, "./Assets/DroneDefender/octotoad1_auv.png", self.Planet5, 300, "Cloud", self.Spaceship)
 
             
 
